@@ -1,5 +1,6 @@
 const express = require('express');
-
+const jwt    = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const User   = require("../models/user");
 const Joi      = require('joi');
 const route = express.Router();
@@ -22,18 +23,18 @@ route.get('/:id',async (req, res) => {
 
 route.post('/',async (req, res) => {
    
-    const userSchema = {
-        firstName: Joi.string().required(),
-        lastName: Joi.string().required(),
-        phone: Joi.string(),
-        email: Joi.string()
-    };
+    // const userSchema = {
+    //     firstName: Joi.string().required(),
+    //     lastName: Joi.string().required(),
+    //     phone: Joi.string(),
+    //     email: Joi.string()
+    // };
 
-    const { error } = Joi.validate(req.body, userSchema);
+    // const { error } = Joi.validate(req.body, userSchema);
 
-      if(error) {
-        return  res.status(400).send(error.details[0].message);
-      }
+    //   if(error) {
+    //     return  res.status(400).send(error.details[0].message);
+    //   }
 
     
       let myUser = new User();
@@ -42,10 +43,39 @@ route.post('/',async (req, res) => {
       myUser.lastName = req.body.lastName;
       myUser.email = req.body.email;
       myUser.phone = req.body.phone;
-      
+      let password = await bcrypt.hash(req.body.password, 10);
+      myUser.password = password;
+
       let result = await myUser.save();
 
     res.send(result)
+})
+
+
+route.post('/login', async (req, res) => {
+   
+     
+    user = {
+        email: req.body.email,
+        password: req.body.password
+    }
+
+    let myUser = await User.findOne({ email: user.email });
+
+    if(myUser) {
+      bcrypt.compare(user.password, myUser.password, (err, val) => {
+          if(!val) {
+              return res.status(400).json({status: 0})
+          }
+          let token = jwt.sign({id: myUser._id}, 'lacheraimarrakech')
+          res.status(201).json({status: 1, token: token})
+      })
+         
+    }else {
+        res.status(400).send('user not found');
+    }
+
+
 })
 
 route.put('/:id',async (req, res) => {

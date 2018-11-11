@@ -1,5 +1,6 @@
 const express = require('express')
 const multer = require("multer");
+
 //Models
 const Course   = require("./../models/course");
 const Joi      = require('joi');
@@ -34,7 +35,7 @@ const MIME_TYPE_MAP = {
 
 route.get('/', async (req, res) => {
 
-    const myCourses = await Course.find();
+    const myCourses = await Course.find().populate('tags').populate({ path: 'author', select: 'firstName lastName' });
     res.send(myCourses);
 })
 
@@ -65,7 +66,7 @@ route.post('/', multer({ storage: storage }).single("image"), async (req, res) =
 
       myCourse.title = req.body.title;
       myCourse.price = req.body.price;
-      myCourse.tags = req.body.tags;
+      myCourse.tags = JSON.parse(req.body.tags);
       myCourse.author = req.body.author;
 
       const url = req.protocol + "://" + req.get("host");
