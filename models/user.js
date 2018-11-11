@@ -12,7 +12,9 @@ const userSchema = mongoose.Schema({
     firstName: String,
     lastName: String,
     phone: String,
-    email: String
+    email: String,
+    password: String,
+    active: {type: Boolean, default: false}
 });
 
 module.exports = mongoose.model('User', userSchema);

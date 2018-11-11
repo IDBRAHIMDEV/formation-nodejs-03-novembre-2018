@@ -1,18 +1,41 @@
 const express = require('express')
+const multer = require("multer");
 //Models
 const Course   = require("./../models/course");
 const Joi      = require('joi');
 const route = express.Router();
 
 
+const MIME_TYPE_MAP = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg"
+  };
+  
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const isValid = MIME_TYPE_MAP[file.mimetype];
+      let error = new Error("Invalid mime type");
+      if (isValid) {
+        error = null;
+      }
+      cb(error, "public/images/courses");
+    },
+    filename: (req, file, cb) => {
+      const name = file.originalname
+        .toLowerCase()
+        .split(" ")
+        .join("-");
+      const ext = MIME_TYPE_MAP[file.mimetype];
+      cb(null, name + "-" + Date.now() + "." + ext);
+    }
+  });
+  
+
 route.get('/', async (req, res) => {
 
     const myCourses = await Course.find();
-    res.render('course/index', {
-        courses: myCourses,
-        title: "salam les amis",
-        message: "message comme contenu"
-    });
+    res.send(myCourses);
 })
 
 route.get('/:id',async (req, res) => {
@@ -24,26 +47,29 @@ route.get('/:id',async (req, res) => {
     res.send(course);
 })
 
-route.post('/',async (req, res) => {
+route.post('/', multer({ storage: storage }).single("image"), async (req, res) => {
    
-    const courseSchema = {
-        title: Joi.string().required().min(2).max(10),
-        price: Joi.number().required()
-    };
+    // const courseSchema = {
+    //     title: Joi.string().required().min(2).max(10),
+    //     price: Joi.number().required(),
+    // };
 
-    const { error } = Joi.validate(req.body, courseSchema);
+    // const { error } = Joi.validate(req.body, courseSchema);
 
-      if(error) {
-        return  res.status(400).send(error.details[0].message);
-      }
+    //   if(error) {
+    //     return  res.status(400).send(error.details[0].message);
+    //   }
 
-    
+     
       let myCourse = new Course();
 
       myCourse.title = req.body.title;
       myCourse.price = req.body.price;
       myCourse.tags = req.body.tags;
       myCourse.author = req.body.author;
+
+      const url = req.protocol + "://" + req.get("host");
+      myCourse.image = url + "/public/images/courses/" + req.file.filename;
       myCourse.isPublished = req.body.isPublished;
       
       let result = await myCourse.save();

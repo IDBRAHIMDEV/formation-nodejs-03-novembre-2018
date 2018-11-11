@@ -12,6 +12,7 @@ const courseSchema = mongoose.Schema({
     tags: [ String ],
     isPublished: Boolean,
     author: String,
+    image: String,
     date: { type: Date, default: Date.now }
 });
 
