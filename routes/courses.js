@@ -69,7 +69,7 @@ route.post('/', multer({ storage: storage }).single("image"), async (req, res) =
       myCourse.author = req.body.author;
 
       const url = req.protocol + "://" + req.get("host");
-      myCourse.image = url + "/public/images/courses/" + req.file.filename;
+      myCourse.image = url + "/images/courses/" + req.file.filename;
       myCourse.isPublished = req.body.isPublished;
       
       let result = await myCourse.save();
